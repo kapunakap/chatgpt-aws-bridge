@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.example.aws-mcp-tunnel</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/ABSOLUTE/PATH/TO/tunnel-client</string>
+    <string>run</string>
+    <string>--config</string>
+    <string>/Users/YOUR_USER/.config/tunnel-client/aws-mcp.yaml</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/YOUR_USER/Library/Logs/aws-mcp-tunnel.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/YOUR_USER/Library/Logs/aws-mcp-tunnel.error.log</string>
+</dict>
+</plist>

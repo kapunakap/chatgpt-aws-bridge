@@ -1,0 +1,42 @@
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# AWS credentials / config / caches
+.aws/
+credentials
+credentials.*
+config.local
+sso/cache/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Tunnel-client live/private config
+*tunnel*.yaml
+*tunnel*.yml
+!config/*.yaml.example
+!config/*.yml.example
+*control-plane-api-key*
+*runtime-secret*
+*health.url
+
+# Logs / temp
+*.log
+logs/
+tmp/
+.cache/
+
+# Python / Node incidental artifacts
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/

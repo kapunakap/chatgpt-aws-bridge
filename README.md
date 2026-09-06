@@ -211,9 +211,22 @@ Do not call the setup complete until all applicable gates pass:
 6. CloudTrail provides audit visibility for AWS API actions performed through the MCP path.
 7. No secrets are present in the repository.
 
+### Live acceptance record — 2026-09-06
+
+A real ChatGPT.com connection was validated against the AWS managed MCP Server using **direct OAuth**:
+
+- AWS MCP knowledge/documentation search succeeded;
+- an authenticated `STS GetCallerIdentity` read succeeded through the live AWS MCP connection;
+- account and principal identifiers were redacted before evidence was reported;
+- the authenticated identity matched the account and principal recorded by the corresponding ChatGPT AWS-MCP OAuth authorization event;
+- CloudTrail recorded the MCP-driven `GetCallerIdentity` call with `aws-mcp.amazonaws.com` attribution;
+- the live authenticated tool schema did not expose an `aws_profile` parameter, so SigV4 multi-profile positive/negative tests were not applicable to this OAuth validation.
+
+The SigV4/tunnel path remains documented for users who need local profiles or cross-account switching, but it was not the transport used by this acceptance run.
+
 ## Important tool note
 
-AWS deprecated `aws___call_aws` on July 15, 2026 and documented removal after August 31, 2026. New integrations should prefer `aws___run_script` for authenticated AWS operations and use the other current AWS MCP tools as appropriate.
+AWS deprecated `aws___call_aws` on July 15, 2026 and scheduled its removal after August 31, 2026. As of September 6, 2026, the live ChatGPT AWS MCP surface rejects that tool as removed. Use `aws___run_script` for authenticated AWS operations and the other current AWS MCP tools as appropriate.
 
 ## Security boundaries
 

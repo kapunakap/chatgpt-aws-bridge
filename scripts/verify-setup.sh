@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-profile=""
+profiles=()
 tunnel_config=""
 launch_label=""
 health_url_file=""
@@ -9,7 +9,7 @@ health_url_file=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --profile)
-      profile="${2:?missing value for --profile}"
+      profiles+=("${2:?missing value for --profile}")
       shift 2
       ;;
     --tunnel-config)
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -h|--help)
-      echo "usage: $0 --profile PROFILE --tunnel-config FILE --launch-label LABEL --health-url-file FILE"
+      echo "usage: $0 --profile PROFILE [--profile PROFILE ...] --tunnel-config FILE --launch-label LABEL --health-url-file FILE"
       exit 0
       ;;
     *)
@@ -35,7 +35,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for required in profile tunnel_config launch_label health_url_file; do
+if [[ ${#profiles[@]} -eq 0 ]]; then
+  echo "missing required argument: profile" >&2
+  exit 2
+fi
+
+for required in tunnel_config launch_label health_url_file; do
   if [[ -z "${!required}" ]]; then
     echo "missing required argument: $required" >&2
     exit 2
@@ -53,7 +58,10 @@ if command -v stat >/dev/null 2>&1; then
   esac
 fi
 
-"$(dirname "$0")/verify-aws-auth.sh" --profile "$profile"
+for profile in "${profiles[@]}"; do
+  echo "Checking AWS profile: $profile"
+  "$(dirname "$0")/verify-aws-auth.sh" --profile "$profile"
+done
 
 if ! launchctl print "gui/$(id -u)/${launch_label}" >/dev/null 2>&1; then
   echo "launchd job not found/running: $launch_label" >&2

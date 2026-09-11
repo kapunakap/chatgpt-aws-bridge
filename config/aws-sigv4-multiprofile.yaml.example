@@ -1,0 +1,33 @@
+# Sanitized multi-profile example only. Never replace placeholders in this repository.
+# Copy this file outside the repo, chmod 600, then edit the private copy.
+# The first --profile value is the default profile used when a tool call omits aws_profile.
+# Only profiles explicitly listed after --profile are exposed to ChatGPT.
+
+config_version: 1
+
+control_plane:
+  base_url: "YOUR_CONTROL_PLANE_BASE_URL"
+  url_path: "YOUR_CONTROL_PLANE_URL_PATH"
+  tunnel_id: "YOUR_TUNNEL_ID"
+  # Keep the runtime secret outside Git.
+  api_key: "file:/Users/YOUR_USER/.config/tunnel-client/secrets/aws-control-plane-api-key"
+
+health:
+  listen_addr: "127.0.0.1:0"
+  url_file: "/Users/YOUR_USER/.config/tunnel-client/aws-mcp-health.url"
+
+admin_ui:
+  open_browser: false
+
+log:
+  level: info
+  format: json
+
+mcp:
+  commands:
+    - channel: main
+      # Resolve uvx to an absolute path for launchd reliability.
+      # Pin mcp-proxy-for-aws for reproducible behavior.
+      # Replace the profile placeholders only in your private copy.
+      # Add more profile names before --metadata when needed.
+      command: "/usr/bin/env AWS_REGION=YOUR_DEFAULT_REGION /ABSOLUTE/PATH/TO/uvx mcp-proxy-for-aws==1.6.4 https://aws-mcp.eu-central-1.api.aws/mcp --profile YOUR_DEFAULT_PROFILE YOUR_SECONDARY_PROFILE --metadata AWS_REGION=YOUR_DEFAULT_REGION"

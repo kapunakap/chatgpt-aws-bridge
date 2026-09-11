@@ -1,12 +1,69 @@
 # chatgpt-aws-bridge
 
-A secret-safe reference setup for using the **AWS MCP Server** from ChatGPT.
+A secret-safe reference setup for using the **AWS managed MCP Server** from ChatGPT, especially when you need explicit AWS profiles, multi-account switching, local AWS credentials, or SigV4 transport control.
 
 This repository does **not** reimplement AWS MCP. It documents and packages the ChatGPT-specific integration, security boundaries, verification, and optional local SigV4 bridge around AWS's managed MCP server.
 
+## Current ChatGPT positioning
+
+As of September 2026, **AWS MCP is no longer the best default interface for most day-to-day AWS work in ChatGPT**.
+
+ChatGPT now has higher-level AWS plugins that overlap heavily with the raw AWS MCP tool surface:
+
+- **AWS Core** — recommended default for general AWS work. It combines generic AWS API execution with service-specific operational guidance for areas such as IAM, databases, Lambda/serverless, ECS, CloudWatch/observability, CDK, CloudFormation, billing, Secrets Manager, and more.
+- **AWS Data Analytics** — recommended specialist for Glue, Athena, S3 Tables, Redshift, data-lake, ETL, JDBC-source, and analytics workflows.
+- **AWS MCP** — still useful as the underlying/advanced AWS transport and authentication layer, especially for explicit AWS CLI profiles, per-call multi-account/profile switching, local AWS credentials, SigV4 control, and MCP-specific audit/IAM semantics.
+
+The practical architecture is therefore:
+
+```text
+AWS Core
+   │
+   └── default general AWS work
+
+AWS Data Analytics
+   │
+   └── Glue / Athena / Redshift / S3 Tables / ETL
+
+chatgpt-aws-bridge + AWS managed MCP Server
+   │
+   └── advanced auth/account routing:
+       multi-profile, multi-account,
+       local AWS credentials, SigV4 control
+```
+
+### Capability overlap
+
+| Capability | AWS MCP | AWS Core | AWS Data Analytics |
+|---|---:|---:|---:|
+| Generic AWS API execution (`run_script`) | ✅ | ✅ | ✅ |
+| Multi-step boto3 diagnosis/verification | ✅ | ✅ | ✅ |
+| General AWS operational guidance | Generic API surface | **✅ Recommended** | Limited |
+| IAM / Lambda / ECS / CloudWatch / CDK / CloudFormation | Generic API surface | **✅ Specialized guidance** | ❌ |
+| RDS/database guidance | Generic API surface | **✅ Specialized guidance** | JDBC/analytics-oriented |
+| Glue / Athena / S3 Tables / data-lake workflows | Generic API surface | Some | **✅ Recommended** |
+| Local AWS CLI profiles | **✅ via SigV4 bridge** | Connection-dependent | Connection-dependent |
+| Per-call profile/account switching | **✅ via SigV4 multi-profile mode** | Not assumed | Not assumed |
+| MCP-specific IAM context / CloudTrail attribution | **✅** | Depends on transport | Depends on transport |
+
+### Recommendation
+
+Use **AWS Core first** for normal AWS engineering and operations. Add **AWS Data Analytics** when the job is specifically analytics/data-lake oriented.
+
+Keep this bridge when you need something the higher-level plugin connection does not provide directly, particularly:
+
+- multiple AWS CLI profiles in one ChatGPT session;
+- dev/staging/prod or cross-account switching per tool call;
+- existing local AWS SSO / `aws login` credentials;
+- explicit SigV4 transport;
+- MCP-specific IAM guardrails and audit attribution;
+- a reproducible, inspectable ChatGPT → AWS managed MCP transport path.
+
+In short: **AWS Core is the default intelligence/operations layer; this project remains valuable as the advanced authentication and account-routing layer.**
+
 ## Recommended architecture: direct OAuth
 
-As of July 2026, AWS supports OAuth 2.1 for web MCP clients, including ChatGPT.com. For a single AWS identity, this is the simplest path:
+For a single AWS identity where you specifically want the managed AWS MCP transport, direct OAuth remains the simplest path:
 
 ```text
 ChatGPT
@@ -57,12 +114,16 @@ AWS already maintains the official [Agent Toolkit for AWS](https://github.com/aw
 - local health/auth verification scripts;
 - an explicit end-to-end acceptance checklist.
 
+With AWS Core and AWS Data Analytics available, the repo's strongest differentiator is no longer generic AWS API access. It is the **transport, authentication, security, audit, and multi-profile/account-routing layer** around the AWS managed MCP Server.
+
 ## Choose a mode
 
 | Need | Recommended mode |
 |---|---|
-| One AWS identity from ChatGPT | Direct OAuth |
-| No local process | Direct OAuth |
+| Normal general AWS work in ChatGPT | AWS Core |
+| Glue / Athena / Redshift / S3 Tables / ETL | AWS Data Analytics |
+| One AWS identity through AWS managed MCP | Direct OAuth |
+| No local process for AWS managed MCP | Direct OAuth |
 | Multiple AWS CLI profiles in one session | SigV4 + tunnel-client |
 | Cross-account/profile switching per tool call | SigV4 + tunnel-client |
 | Existing local AWS SSO / `aws login` credentials | SigV4 + tunnel-client |

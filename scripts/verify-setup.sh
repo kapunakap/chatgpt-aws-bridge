@@ -74,7 +74,11 @@ fi
 
 # Private config should not be readable by group/other.
 if command -v stat >/dev/null 2>&1; then
-  perms="$(stat -f '%Lp' "$tunnel_config" 2>/dev/null || stat -c '%a' "$tunnel_config")"
+  if [[ "$(uname -s)" == Darwin ]]; then
+    perms="$(stat -f '%Lp' "$tunnel_config")"
+  else
+    perms="$(stat -c '%a' "$tunnel_config")"
+  fi
   case "$perms" in
     600|400) ;;
     *) echo "warning: expected restrictive permissions (600/400), found $perms on $tunnel_config" >&2 ;;

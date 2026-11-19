@@ -20,6 +20,7 @@ for path in sorted((root / "examples" / "iam").glob("*.json")):
 PY
 
 bash "$root/tests/test-verify-setup.sh"
+bash "$root/tests/test-secret-scan.sh"
 
 "$root/scripts/secret-scan.sh" "$root"
 

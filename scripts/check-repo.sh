@@ -3,7 +3,7 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 
-for script in "$root"/scripts/*.sh; do
+for script in "$root"/scripts/*.sh "$root"/tests/*.sh; do
   bash -n "$script"
 done
 
@@ -18,6 +18,8 @@ for path in sorted((root / "examples" / "iam").glob("*.json")):
     json.loads(path.read_text())
     print(f"json: OK {path.relative_to(root)}")
 PY
+
+bash "$root/tests/test-verify-setup.sh"
 
 "$root/scripts/secret-scan.sh" "$root"
 

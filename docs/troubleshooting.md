@@ -75,7 +75,25 @@ Also confirm:
 
 The proxy only exposes profiles configured at startup through `--profile` or `AWS_MCP_PROXY_PROFILES`. A profile existing in `~/.aws/config` is not enough by itself.
 
-Restart the local proxy/tunnel after changing the allowlist.
+The **multi-profile tunnel template** clears inherited `AWS_MCP_PROXY_PROFILES` and `AWS_PROFILE` to make its explicit `--profile` list authoritative. If you use a custom command, remember that `AWS_MCP_PROXY_PROFILES` takes precedence over the command-line list.
+
+Restart the local proxy/tunnel and reload the ChatGPT connection after **adding or removing profiles**. No restart is needed to switch among already allowed profiles or after refreshing credentials.
+
+## `aws_profile` missing from ChatGPT tools
+
+Check that ChatGPT is connected to the **SigV4 Secure MCP Tunnel** and not the legacy direct OAuth endpoint. Then verify that the proxy has **two or more** explicitly allowlisted profiles, is version 1.6.0 or later, and has been restarted after configuration changes.
+
+The `aws_profile` argument should appear on authenticated tools such as `run_script`, `get_presigned_url`, and `get_tasks` where available. It cannot be added to an OAuth connection through documentation or prompt instructions alone.
+
+## Secondary profile fails while default succeeds
+
+Run the local auth check for **each** profile:
+
+```bash
+./scripts/verify-aws-auth.sh --profile YOUR_SECONDARY_PROFILE
+```
+
+Refresh the specific expired SSO / `aws login` profile, confirm its region and IAM permissions, and run `verify-setup.sh` with every allowlisted `--profile` argument. Account identifiers remain suppressed by the verification scripts.
 
 ## Tunnel health is live but not ready
 

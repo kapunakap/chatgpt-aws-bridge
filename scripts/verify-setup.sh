@@ -81,14 +81,16 @@ if command -v stat >/dev/null 2>&1; then
   esac
 fi
 
-auth_args=()
-[[ -n "$region" ]] && auth_args+=(--region "$region")
-
 # Verify EACH allowlisted profile independently, in the same order as --profile
 # in the private tunnel config. Profile/account identifiers are never printed.
+# Avoid expanding an empty array: macOS still ships Bash 3.2 with nounset.
 for ((i = 0; i < ${#profiles[@]}; i++)); do
   echo "Checking AWS profile $((i + 1))/${#profiles[@]}"
-  "$(dirname "$0")/verify-aws-auth.sh" --profile "${profiles[i]}" "${auth_args[@]}"
+  if [[ -n "$region" ]]; then
+    "$(dirname "$0")/verify-aws-auth.sh" --profile "${profiles[i]}" --region "$region"
+  else
+    "$(dirname "$0")/verify-aws-auth.sh" --profile "${profiles[i]}"
+  fi
 done
 
 if [[ "$require_distinct_accounts" == true ]]; then
@@ -103,8 +105,8 @@ if [[ "$require_distinct_accounts" == true ]]; then
       echo "could not verify account separation" >&2
       exit 1
     fi
-    for prior in "${accounts[@]}"; do
-      if [[ "$account" == "$prior" ]]; then
+    for ((i = 0; i < ${#accounts[@]}; i++)); do
+      if [[ "$account" == "${accounts[i]}" ]]; then
         echo "configured profiles are not all in distinct AWS accounts" >&2
         exit 1
       fi

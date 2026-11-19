@@ -31,8 +31,8 @@ args=(sts get-caller-identity --output json)
 [[ -n "$profile" ]] && args+=(--profile "$profile")
 [[ -n "$region" ]] && args+=(--region "$region")
 
-# Suppress account, ARN, and user ID from stdout. Only success/failure matters here.
-if aws "${args[@]}" >/dev/null; then
+# Suppress identity values and potentially sensitive CLI error details. Only success/failure matters here.
+if AWS_PAGER="" aws "${args[@]}" >/dev/null 2>&1; then
   echo "AWS authentication: OK"
 else
   echo "AWS authentication: FAILED" >&2

@@ -1,3 +1,5 @@
+# Single-profile tunnel example (backward-compatible).
+# For per-call account switching, use config/aws-sigv4-multi-profile.yaml.example.
 # Sanitized example only. Never replace placeholders in this repository.
 # Copy this file outside the repo, chmod 600, then edit the private copy.
 

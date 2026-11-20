@@ -172,24 +172,22 @@ First verify AWS credentials outside the tunnel:
 ./scripts/verify-aws-auth.sh --profile YOUR_PROFILE
 ```
 
-Copy the secret-safe example outside the repository:
+Copy the appropriate secret-safe example **outside** the repository:
 
 ```bash
 mkdir -p "$HOME/.config/tunnel-client"
-cp config/aws-sigv4.yaml.example \
-  "$HOME/.config/tunnel-client/aws-mcp.yaml"
+# One identity (legacy path):
+cp config/aws-sigv4.yaml.example "$HOME/.config/tunnel-client/aws-mcp.yaml"
+# Or, for two or more explicitly allowlisted identities:
+cp config/aws-sigv4-multi-profile.yaml.example "$HOME/.config/tunnel-client/aws-mcp.yaml"
 chmod 600 "$HOME/.config/tunnel-client/aws-mcp.yaml"
 ```
 
 Edit only the private copy. Keep all tunnel runtime secrets outside Git.
 
-The example launches:
+Both examples launch a pinned `mcp-proxy-for-aws==1.6.4` against the AWS MCP endpoint. The multi-profile example passes `--profile YOUR_READONLY_PROFILE YOUR_SECONDARY_PROFILE` explicitly; the first is the default. It unsets inherited profile overrides.
 
-```text
-uvx mcp-proxy-for-aws==1.6.4 <AWS_MCP_ENDPOINT>
-```
-
-with an explicit AWS profile and default AWS Region.
+Edit only the private copy to supply your real profile names, local paths, control-plane settings, and AWS Region.
 
 See [docs/setup-sigv4-tunnel.md](docs/setup-sigv4-tunnel.md).
 
@@ -197,13 +195,15 @@ See [docs/setup-sigv4-tunnel.md](docs/setup-sigv4-tunnel.md).
 
 AWS MCP's SigV4 proxy can expose an allowlisted set of AWS CLI profiles and add an `aws_profile` parameter to authenticated tool calls. This enables per-call switching without restarting the MCP client.
 
-Example:
+Example (inside the private tunnel config):
 
 ```text
-AWS_MCP_PROXY_PROFILES="prod-readonly dev staging"
+mcp-proxy-for-aws==1.6.4 <AWS_MCP_ENDPOINT> --profile YOUR_READONLY_PROFILE YOUR_SECONDARY_PROFILE
 ```
 
-Use a read-only profile as the default when practical. Only explicitly listed profiles are available to the agent.
+AWS also supports `AWS_MCP_PROXY_PROFILES` as an alternative; it overrides `--profile` if set. Use a read-only profile as the default when practical. Only explicitly listed profiles are available to the agent.
+
+See the [multi-profile template](config/aws-sigv4-multi-profile.yaml.example) and [setup/acceptance guide](docs/setup-sigv4-tunnel.md).
 
 OAuth does not currently support per-call multi-profile switching.
 
@@ -258,7 +258,19 @@ The script calls `aws sts get-caller-identity` but suppresses account/ARN output
   --health-url-file "$HOME/.config/tunnel-client/aws-mcp-health.url"
 ```
 
-Local checks are necessary but **not sufficient**. Final acceptance requires a real tool call from ChatGPT through the configured AWS MCP connection.
+For multi-profile setup, repeat `--profile` for **each** allowlisted profile. To verify that they represent different accounts without printing identifiers, add `--require-distinct-accounts`:
+
+```bash
+./scripts/verify-setup.sh \
+  --profile YOUR_READONLY_PROFILE \
+  --profile YOUR_SECONDARY_PROFILE \
+  --require-distinct-accounts \
+  --tunnel-config "$HOME/.config/tunnel-client/aws-mcp.yaml" \
+  --launch-label com.example.aws-mcp-tunnel \
+  --health-url-file "$HOME/.config/tunnel-client/aws-mcp-health.url"
+```
+
+Local checks are necessary but **not sufficient**. Final acceptance requires live ChatGPT calls through the **SigV4 tunnel** with default and secondary profiles, a non-allowlisted rejection, and CloudTrail attribution.
 
 ## End-to-end acceptance
 
@@ -268,7 +280,7 @@ Do not call the setup complete until all applicable gates pass:
 2. Documentation search succeeds.
 3. An authenticated, harmless AWS API read succeeds.
 4. The returned data is clearly from the intended AWS identity/account without exposing identifiers in logs or screenshots.
-5. If using SigV4 multi-profile mode, an explicitly allowlisted secondary profile works and a non-allowlisted profile is rejected.
+5. If using SigV4 multi-profile mode, the live `run_script` schema exposes `aws_profile`, reads succeed for both the default and an explicitly allowlisted secondary profile against their intended distinct identities, and a non-allowlisted profile is rejected.
 6. CloudTrail provides audit visibility for AWS API actions performed through the MCP path.
 7. No secrets are present in the repository.
 
@@ -310,7 +322,8 @@ chatgpt-aws-bridge/
 ├── .gitignore
 ├── .github/workflows/ci.yml
 ├── config/
-│   └── aws-sigv4.yaml.example
+│   ├── aws-sigv4.yaml.example
+│   └── aws-sigv4-multi-profile.yaml.example
 ├── launchd/
 │   └── com.example.aws-mcp-tunnel.plist.example
 ├── examples/iam/
@@ -324,6 +337,8 @@ chatgpt-aws-bridge/
 │   ├── verify-setup.sh
 │   ├── secret-scan.sh
 │   └── check-repo.sh
+├── tests/
+│   └── test-verify-setup.sh
 └── docs/
     ├── architecture.md
     ├── setup-oauth.md

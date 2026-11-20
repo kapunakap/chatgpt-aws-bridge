@@ -1,0 +1,34 @@
+# Sanitized example for two or more explicit local AWS CLI profiles.
+# Copy to a private file outside Git, chmod 600, and replace placeholders there.
+# The FIRST profile is the default; make it read-only where practical.
+# Neither live profile names nor AWS credentials belong in this repository.
+#
+# AWS_MCP_PROXY_PROFILES takes precedence over --profile, so this example
+# explicitly unsets it (and AWS_PROFILE) for deterministic allowlist behavior.
+
+config_version: 1
+
+control_plane:
+  base_url: "YOUR_CONTROL_PLANE_BASE_URL"
+  url_path: "YOUR_CONTROL_PLANE_URL_PATH"
+  tunnel_id: "YOUR_TUNNEL_ID"
+  api_key: "file:/Users/YOUR_USER/.config/tunnel-client/secrets/aws-control-plane-api-key"
+
+health:
+  listen_addr: "127.0.0.1:0"
+  url_file: "/Users/YOUR_USER/.config/tunnel-client/aws-mcp-health.url"
+
+admin_ui:
+  open_browser: false
+
+log:
+  level: info
+  format: json
+
+mcp:
+  commands:
+    - channel: main
+      # Resolve uvx to an absolute path for launchd; keep the proxy version pinned.
+      # This allowlist is local to your PRIVATE copy of the configuration.
+      # Add further explicitly approved profiles after YOUR_SECONDARY_PROFILE.
+      command: "/usr/bin/env -u AWS_MCP_PROXY_PROFILES -u AWS_PROFILE AWS_REGION=YOUR_DEFAULT_REGION /ABSOLUTE/PATH/TO/uvx mcp-proxy-for-aws==1.6.4 https://aws-mcp.eu-central-1.api.aws/mcp --profile YOUR_READONLY_PROFILE YOUR_SECONDARY_PROFILE --metadata AWS_REGION=YOUR_DEFAULT_REGION"

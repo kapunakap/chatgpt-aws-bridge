@@ -10,7 +10,7 @@ patterns=(
   'ASIA[0-9A-Z]{16}'
   'AWS_SECRET_ACCESS_KEY[[:space:]]*=[[:space:]]*[^[:space:]]+'
   'AWS_SESSION_TOKEN[[:space:]]*=[[:space:]]*[^[:space:]]+'
-  '-----BEGIN (RSA |EC |OPENSSH |)?PRIVATE KEY-----'
+  '-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----|-----BEGIN PRIVATE KEY-----'
   'xox[baprs]-[A-Za-z0-9-]+'
   'gh[pousr]_[A-Za-z0-9_]+'
 )
@@ -20,9 +20,15 @@ for pattern in "${patterns[@]}"; do
   if grep -RInE \
       --exclude-dir=.git \
       --exclude='secret-scan.sh' \
-      -- "$pattern" "$root"; then
-    echo "potential secret matched pattern: $pattern" >&2
+      -- "$pattern" "$root" >/dev/null; then
+    echo "potential secret matched a configured pattern" >&2
     failed=1
+  else
+    status=$?
+    if [[ "$status" -gt 1 ]]; then
+      echo "secret scan could not complete" >&2
+      exit "$status"
+    fi
   fi
 done
 
